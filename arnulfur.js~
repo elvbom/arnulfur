@@ -1,0 +1,21 @@
+$(window).scroll(
+    {
+        previousTop: 0
+    }, 
+    function () {
+    var currentTop = $(window).scrollTop();
+    if (currentTop < this.previousTop) { //scrollar upp
+        if (currentTop > (0.88*$(window).height())) {
+            var p = $("header").css("background-color", "rgba(150, 150, 150, 0.95)");
+        } else {
+            var p = $("header").css("background-color", "rgba(150, 150, 150, 0.0)");
+        }
+    } else { //scrollar ner
+        if (currentTop > (0.95*$(window).height())) {
+            var p = $("header").css("background-color", "rgba(150, 150, 150, 0.95)");
+        } else if (currentTop > (0.80*$(window).height())) {
+            $(".logo").slideUp();
+        }
+    } 
+    this.previousTop = currentTop;
+});
