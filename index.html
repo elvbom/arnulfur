@@ -13,17 +13,33 @@
 	<body>
 
 		<header>
-			<ul id="headerlista">
-				<li><a href="#about">About</a></li>
-				<li><a href="#videos">Videos</a></li>
-				<li><a href="#contact">Contact and Booking</a></li>
-			</ul>
+			<div class="left">
+				<div class="logo">
+					<h1>Arnulfur Tofraulfurinn</h1>
+				</div>
+				<div class="headerlist">
+					<ul>
+						<!-- <li><a class="active" href="#logo">Start</a></li> -->
+						<li><a href="#about">About</a></li>
+						<li><a href="#videos">Videos</a></li>						
+						<li><a href="#contact">Contact and Booking</a></li>
+					</ul>
+				</div>
+			</div>
+			<div class="right">
+				<a target="_blank" href="https://www.facebook.com/eaglewolfmagic"/><img src="bilder/facebook.png" width="20"></a>
+				<a target="_blank" href="https://www.facebook.com/eaglewolfmagic"/><img src="bilder/insta.png" width="20"></a>
+				<a target="_blank" href="https://www.youtube.com/channel/UCxXRJsnQULNh6TKz79v1Wrg"/><img src="bilder/youtube.png" width="20"></a>
+			</div>
 		</header>
 
+		<div class="scroll">
+			+356 865 9921 <a href="#about"><img src="bilder/arrow.jpeg" width="45"/ onClick="jumpScroll()"></a>blessad@arnulfur.is</p>
+		</div>
 		<div class="wrapper">
-			<div class="yellow_header">
+			<div class="yellow_header" id="about">
 				<div class="content">
-					<h2 class="yellow" id="about">About</h2>
+					<h2 class="yellow">About</h2>
 					<hr class="yellow">
 				</div>
 			</div>
@@ -32,51 +48,40 @@
 					<p>Arnulfur has been crowned the sexiest man alive 2008, 2009 and regained the title in 2015 almost making him the person who has held the title the most times, second to Jans who had a 21 year long hot streak 1952-1973.</p>
 				</div>
 			</div>
-			<div class="dark">
-				<div class="content">
-				</div>
+			
+			<div id="videos" class="content">
+				<h2 class="darker">Videos</h2>
+				<hr class="darker"><br/>
 			</div>
 
-			<div class="darker">
-				<div class="content">
-					<h2 class="darker" id="videos">Videos</h2>
-					<hr class="darker"><br/>
-				</div>
-
-					<div class="videoWrapper">
-						<iframe width="1280" height="720" src="https://www.youtube.com/embed/2tMh4KnCvtY" frameborder="0" allowfullscreen></iframe>
-					</div>
-
-					<div class="videoWrapper">
-						<iframe width="1280" height="720" src="https://www.youtube.com/embed/BCSBfQ3l4sE" frameborder="0" allowfullscreen></iframe>
-					</div>
-
-					<div class="videoWrapper">
-						<iframe width="1280" height="720" src="https://www.youtube.com/embed/58g60PcQlqc" frameborder="0" allowfullscreen></iframe>
-					</div>
+			<div class="videoWrapper">
+				<iframe width="1280" height="720" src="https://www.youtube.com/embed/2tMh4KnCvtY" frameborder="0" allowfullscreen></iframe>
 			</div>
-
-			<div class="light">
+			
+			<div class="light" id="contact">
 				<div class="content">
-					<h2 id="contact">Contact and Booking</h2>
+					<h2>Contact and Booking</h2>
 					<hr>
-					<p>Either book by calling +356XXXXXX, sending a message to <a href="mailto:hej@icelandfunland.is">hej@icelandfunland.is</a> or filling out the online booking form.</p>
-					 <form>
+					<p id="topform">Either book by calling +356XXXXXX, sending a message to <a href="mailto:hej@icelandfunland.is">hej@icelandfunland.is</a> or filling out the online booking form.</p>
+					<form method="post" action="inquiry.php">
 						<fieldset>
-						    <legend>Online Booking</legend>
-						    Name:<br>
-						    <input type="text" name="firstname">
-						    <br>
-						    Email:<br>
-						    <input type="text" name="lastname">
-						    <br>
-						    Inquiry:<br>
-						    <input type="text" name="nr_people">
-						    <br><br>
-						    <input type="submit" value="Submit">
+							<legend>Online Booking</legend>
+						    <label for="name">Name: </label>
+						   	<input type="text" name="name" size="30">
+						   	<label for="email">Email: </label>
+						   	<input type="text" name="email" size="30">
+						   	<label for="message">Message:</label>
+					    	<textarea rows="5" name="message" cols="30"></textarea>
+					    	<button type="submit" value="Submit">Submit</button>
 						</fieldset>
 					</form> 
 				</div>
+			</div>
+
+			<div class="footer">
+				<p id="footerleft">+356XXXXXX /// 
+				<a href="mailto:blessad@arnulfur.is">blessad@arnulfur.is</a></p>
+				<p id="footerright">Developed and maintained by <a href="www.isisochbast.se">Isis och Bast</p>
 			</div>
 		</div>
 
