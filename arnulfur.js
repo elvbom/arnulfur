@@ -5,20 +5,27 @@ $(window).scroll(
     function () {
     var currentTop = $(window).scrollTop();
     if (currentTop < this.previousTop) { //scrollar upp
-        if (currentTop > (0.95*$(window).height())) {
+        if (currentTop > (0.90*$(window).height())) {
             var p = $("header").css("background-color", "rgba(54, 128, 191, 0.90)");
             var q = $("header").css("border-bottom", "solid 0.07em #FFFFFF");
+            var s = $(".headerlist img").css("border", "white solid 1px");
+            var t = $(".headerlist img").css("border-radius", "50%");
         } else {
-            var p = $("header").css("background-color", "rgba(54, 128, 191, 0)");
+            var p = $("header").css("background-color", "rgba(120, 120, 120, 0)");
             var q = $("header").css("border", "none");
-            $(".logo").slideDown();
+            var s = $(".headerlist img").css("border", "none");
+            // $(".logo").slideDown();
         }
     } else { //scrollar ner
-        if (currentTop > (0.95*$(window).height())) {
+        if (currentTop > (0.90*$(window).height())) {
             var p = $("header").css("background-color", "rgba(54, 128, 191, 0.90)");
             var q = $("header").css("border-bottom", "solid 0.07em #FFFFFF");
-        } else if (currentTop > (0.80*$(window).height())) {
-            $(".logo").slideUp();
+            var s = $(".headerlist img").css("border", "white solid 1px");
+            var t = $(".headerlist img").css("border-radius", "50%");
+        // } else if (currentTop > (3*$(window).height())) {
+        //     var s = $(".between").fadeIn(); 
+        // } else if (currentTop > ($("#about").offset().top;) {
+            // $(".logo").slideUp();
         }
     } 
     this.previousTop = currentTop;
@@ -40,6 +47,18 @@ $(function() {
 });
 
 
+$(function(){
+    $("#testamonials > div:gt(0)").hide();
+
+    setInterval(function() { 
+      $('#testamonials > div:first')
+        .fadeOut()
+        .next()
+        .fadeIn()
+        .end()
+        .appendTo('#testamonials');
+    },  8000);
+});
 
 // $(document).ready(function () {
 //         $(document).on("scroll", onScroll);
