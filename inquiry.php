@@ -1,193 +1,207 @@
 <?php
-//if "email" variable is filled out, send email
-  if (isset($_REQUEST['email']))  {
-  
-  //Email information
-  $admin_email = "tofrar@arnulfur.is";
-  $email = $_REQUEST['email'];
-  $name = $_REQUEST['name'];
-  $message = $_REQUEST['message'];
-  
-  //send email
-  mail($admin_email, "$name", $message, "From:" . $email);
-  
-  //Email response
-    echo '<script language="javascript">';
-    echo 'alert("Sent!")';
-    echo '</script>';
-  }
-  
-  //if "email" variable is not filled out, display the form
 
+$yourEmail = "tofrar@arnulfur.is";
+$yourWebsite = "Arnúlfur Töframaður";
+$thanksPage = 'index.html#contact';
+$maxPoints = 4;
+$requiredFields = "name,email,message";
+
+$error_msg = array();
+$result = null;
+
+$requiredFields = explode(",", $requiredFields);
+
+function clean($data) {
+	$data = trim(stripslashes(strip_tags($data)));
+	return $data;
+}
+function isBot() {
+	$bots = array("Indy", "Blaiz", "Java", "libwww-perl", "Python", "OutfoxBot", "User-Agent", "PycURL", "AlphaServer", "T8Abot", "Syntryx", "WinHttp", "WebBandit", "nicebot", "Teoma", "alexa", "froogle", "inktomi", "looksmart", "URL_Spider_SQL", "Firefly", "NationalDirectory", "Ask Jeeves", "TECNOSEEK", "InfoSeek", "WebFindBot", "girafabot", "crawler", "www.galaxy.com", "Googlebot", "Scooter", "Slurp", "appie", "FAST", "WebBug", "Spade", "ZyBorg", "rabaz");
+
+	foreach ($bots as $bot)
+		if (stripos($_SERVER['HTTP_USER_AGENT'], $bot) !== false)
+			return true;
+
+	if (empty($_SERVER['HTTP_USER_AGENT']) || $_SERVER['HTTP_USER_AGENT'] == " ")
+		return true;
+	
+	return false;
+}
+
+if ($_SERVER['REQUEST_METHOD'] == "POST") {
+	if (isBot() !== false)
+		$error_msg[] = "No bots please! UA reported as: ".$_SERVER['HTTP_USER_AGENT'];
+		
+	// lets check a few things - not enough to trigger an error on their own, but worth assigning a spam score.. 
+	// score quickly adds up therefore allowing genuine users with 'accidental' score through but cutting out real spam :)
+	$points = (int)0;
+	
+	$badwords = array("adult", "beastial", "bestial", "blowjob", "clit", "cum", "cunilingus", "cunillingus", "cunnilingus", "cunt", "ejaculate", "fag", "felatio", "fellatio", "fuck", "fuk", "fuks", "gangbang", "gangbanged", "gangbangs", "hotsex", "hardcode", "jism", "jiz", "orgasim", "orgasims", "orgasm", "orgasms", "phonesex", "phuk", "phuq", "pussies", "pussy", "spunk", "xxx", "viagra", "phentermine", "tramadol", "adipex", "advai", "alprazolam", "ambien", "ambian", "amoxicillin", "antivert", "blackjack", "backgammon", "texas", "holdem", "poker", "carisoprodol", "ciara", "ciprofloxacin", "debt", "dating", "porn", "link=", "voyeur", "content-type", "bcc:", "cc:", "document.cookie", "onclick", "onload", "javascript");
+
+	foreach ($badwords as $word)
+		if (
+			strpos(strtolower($_POST['message']), $word) !== false || 
+			strpos(strtolower($_POST['name']), $word) !== false
+		)
+			$points += 2;
+	
+	if (strpos($_POST['message'], "http://") !== false || strpos($_POST['message'], "www.") !== false)
+		$points += 2;
+	if (isset($_POST['nojs']))
+		$points += 1;
+	if (preg_match("/(<.*>)/i", $_POST['message']))
+		$points += 2;
+	if (strlen($_POST['name']) < 3)
+		$points += 1;
+	if (strlen($_POST['message']) < 15 || strlen($_POST['message'] > 1500))
+		$points += 2;
+	if (preg_match("/[bcdfghjklmnpqrstvwxyz]{7,}/i", $_POST['message']))
+		$points += 1;
+	// end score assignments
+
+	foreach($requiredFields as $field) {
+		trim($_POST[$field]);
+		
+		if (!isset($_POST[$field]) || empty($_POST[$field]) && array_pop($error_msg) != "Please fill in all the required fields and submit again.\r\n")
+			$error_msg[] = "Please fill in all the required fields and submit again.";
+	}
+
+	if (!empty($_POST['name']) && !preg_match("/^[a-zA-Z-'\s]*$/", stripslashes($_POST['name'])))
+		$error_msg[] = "The name field must not contain special characters.\r\n";
+	if (!empty($_POST['email']) && !preg_match('/^([a-z0-9])(([-a-z0-9._])*([a-z0-9]))*\@([a-z0-9])(([a-z0-9-])*([a-z0-9]))+' . '(\.([a-z0-9])([-a-z0-9_-])?([a-z0-9])+)+$/i', strtolower($_POST['email'])))
+		$error_msg[] = "That is not a valid e-mail address.\r\n";
+	if (!empty($_POST['url']) && !preg_match('/^(http|https):\/\/(([A-Z0-9][A-Z0-9_-]*)(\.[A-Z0-9][A-Z0-9_-]*)+)(:(\d+))?\/?/i', $_POST['url']))
+		$error_msg[] = "Invalid website url.\r\n";
+	
+	if ($error_msg == NULL && $points <= $maxPoints) {
+		$subject = "Automatic Form Email";
+		
+		$message = "You received this e-mail message through your website: \n\n";
+		foreach ($_POST as $key => $val) {
+			if (is_array($val)) {
+				foreach ($val as $subval) {
+					$message .= ucwords($key) . ": " . clean($subval) . "\r\n";
+				}
+			} else {
+				$message .= ucwords($key) . ": " . clean($val) . "\r\n";
+			}
+		}
+		$message .= "\r\n";
+		$message .= 'IP: '.$_SERVER['REMOTE_ADDR']."\r\n";
+		$message .= 'Browser: '.$_SERVER['HTTP_USER_AGENT']."\r\n";
+		$message .= 'Points: '.$points;
+
+		if (strstr($_SERVER['SERVER_SOFTWARE'], "Win")) {
+			$headers   = "From: $yourEmail\r\n";
+		} else {
+			$headers   = "From: $yourWebsite <$yourEmail>\r\n";	
+		}
+		$headers  .= "Reply-To: {$_POST['email']}\r\n";
+
+		if (mail($yourEmail,$subject,$message,$headers)) {
+			if (!empty($thanksPage)) {
+                echo ('<script language="javascript"> alert("Sent"); window.location.href = "index.html#contact"; </script>');
+                exit;
+			} else {
+				$result = 'Mail þitt var send.';
+				$disable = true;
+			}
+		} else {
+			$error_msg[] = 'Mail þín gæti ekki hægt að senda. ['.$points.']';
+		}
+	} else {
+		if (empty($error_msg))
+			$error_msg[] = 'Your mail looks too much like spam, and could not be sent this time. ['.$points.']';
+	}
+}
+function get_data($var) {
+	if (isset($_POST[$var]))
+		echo htmlspecialchars($_POST[$var]);
+}
 ?>
-<!DOCTYPE html>
-<html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+    <meta http-equiv="Content-type" content="text/html; charset=UTF-8"/>
+	<title>Arnúlfur Töframaður tölvupóstur form</title>
+    <link rel="stylesheet" type="text/css" href="arnulfur.css">
+    <style>
+		html {
+			background: url('bilder/img1.jpg');
+			background-size: cover;
+			background-repeat: no-repeat;
+			background-attachment: fixed;
+			background-position: top;
+		}
+		
+		body {
+			padding: 2%;
+		}
 
-    <head>
-        <meta http-equiv="Content-type" content="text/html; charset=UTF-8"/>
-        <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
-        <meta name="keywords" content="Töfrar, Magic, Töframaður, Magician, Arnúlfur, Eaglewolf, Spilagaldur, Galdur, Card magic, Ísland, Iceland, Reykjavík, Skemmtikraftur, Entertainer, Barnaafmæli, Afæli, veislur,">
-        <meta name="description" content="Arnúlfur er einn skemmtilegasti töframaður Íslands. Bættu töfrum við í boðið þitt og veislan breytist í töfra!">
-        <meta name="Page-topic" content="Töfrar, Magic, Iceland, Reykvaik, Töframaður, Arnúlfur, Eaglewolf, Magician">
-   
-        <title>Arnúlfur Töframaður</title>
-        <link rel="stylesheet" type="text/css" href="arnulfur.css">
+		div {
+			color: white;
+			font-size: 1.1em;
+			font-style: bolder;
+			background: rgba(150, 150, 150. 0.6);
+		}
 
-        <script type="text/javascript" src="jquery.js"></script>
-        <script src="arnulfur.js"></script>
+		form {
+			width: 50%;
+		}
+</style>
+</head>
 
-        <link rel="shortcut icon" type="image/x-icon" href="bilder/favicon.ico" />
-
-        <link href="http://fonts.googleapis.com/css?family=Arvo" rel="stylesheet" type="text/css">
-        <link href='https://fonts.googleapis.com/css?family=Alex+Brush' rel='stylesheet' type='text/css'>
-        <link href='https://fonts.googleapis.com/css?family=Amatic+SC:700' rel='stylesheet' type='text/css'>
-
-    </head>
     <body>
 
-        <div id="fb-root"></div>
-        <script>(function(d, s, id) {
-          var js, fjs = d.getElementsByTagName(s)[0];
-          if (d.getElementById(id)) return;
-          js = d.createElement(s); js.id = id;
-          js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.6";
-          fjs.parentNode.insertBefore(js, fjs);
-        }(document, 'script', 'facebook-jssdk'));</script>
+<!--
+	Free PHP Mail Form v2.4.4 - Secure single-page PHP mail form for your website
+	Copyright (c) Jem Turner 2007-2014
+	http://jemsmailform.com/
 
-        <ul class="cb-slideshow">
-            <li>
-                <span>01</span>
-            </li>
-            <li>
-                <span>02</span>
-            </li>
-            <li>
-                <span>03</span>
-            </li>
-        </ul>
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
 
-        <header>
-            <div class="logo">
-                <img src="bilder/LogoF.png" id="logo">
-            </div>
-            <div class="headerlist">
-                <ul>
-                    <!-- <li><a class="active" href="#logo">Start</a></li> -->
-                    <li><a href="#events">Töfrar eru málið!</a></li>
-                    <li><a href="#about">Um mig</a></li>
-                    <li><a href="#contact">Hafa samband</a></li>
-                    <li><a target="_blank" href="https://www.facebook.com/eaglewolfmagic"/><img id="facebook" src="bilder/facebook.png" width="20"></a><a target="_blank" href="https://www.youtube.com/channel/UCxXRJsnQULNh6TKz79v1Wrg"/><img src="bilder/youtube.png" width="20"></a></li>
-                </ul>
-            </div>
-            <div class="buttons">
-                
-                <!-- <a target="_blank" href="https://www.facebook.com/eaglewolfmagic"/><img src="bilder/insta.png" width="20"></a> -->
-                
-            </div>
-        </header>
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
 
-        <div class="scroll">
-            +356 865 9921 <a id="arrow" href="#about" onClick="jumpScroll()">    &#8681;</a>
-            <a id="maillink" href="mailto:blessad@arnulfur.is"> tofrar@arnulfur.is</a></p>
-        </div>
-        <div class="wrapper">
-            <div class="yellow_header" id="events">
-                <div class="content">
-                    <h2 class="yellow">Töfrar eru málið!</h2>
-                    <hr class="yellow">
-                </div>
-            </div>
-            <div class="light">
-                <div class="content">
-                    <p id="events">Ertu að leita eftir punktinum yfir i-ið í veisluna þína?<br><br>
+	To read the GNU General Public License, see http://www.gnu.org/licenses/.
+-->
 
-                    Ég býð upp á eftirminnilega sýningu sem skilur þig og gestina þína eftir bæði undrandi og hlæjandi á sama tíma. Sýningarnar mínar eru sniðnar að óskum hvers og eins, hvort sem um er að ræða lítið fjölskylduboð, barnaafmæli eða mega árshátíð.<br><br>
+<?php
+if (!empty($error_msg)) {
+	echo '<p class="error">ERROR: '. implode("<br />", $error_msg) . "</p>";
+}
+if ($result != NULL) {
+	echo '<p class="success">'. $result . "</p>";
+}
+?>
+	<div>
+        <form action="<?php echo basename(__FILE__); ?>" method="post">
+        <noscript>
+        		<p><input type="hidden" name="nojs" id="nojs" /></p>
+        </noscript>
+        <p>
+        	<label for="name">Nafn:</label> 
+        		<input type="text" name="name" id="name" value="<?php get_data("name"); ?>" /><br />
+        	
+        	<label for="email">Netfang:</label> 
+        		<input type="text" name="email" id="email" value="<?php get_data("email"); ?>" /><br />
+        	
+        	<label for="message">Skilaboð:</label>
+        		<textarea name="message" id="message" rows="5" cols="20"><?php get_data("message"); ?></textarea><br />
+        </p>
+        <p>
+        	<input type="submit" name="submit" id="submit" value="Staðfesta" <?php if (isset($disable) && $disable === true) echo ' disabled="disabled"'; ?> />
+        </p>
+        </form><br>
 
-                    Ef þú ert að leita að aðeins öðruvísi skemmtun þá er ég þinn fullkomni kostur. Í mínum atriðum taka allir þátt þar sem ég fæ sjálfboðaliða úr sal til þess að hjálpa mér að takast á við hin ýmsu verkefni, sem lyftir upp stemningunni í hvaða boði sem er.
+        <p>Takk <a href="http://jemsmailform.com/">Jem</a> fyrir email formi!</p>
 
-                    <h3 class="yellow">Árshátiðir - afmæli</h3>
-                    <hr class="yellow"><br/>
-
-                    Hvort sem það er lítil árshátíð hjá ykkur vinkonum/vinum eða lokahóf hjá fyrirtækinu þínu þá eru töfrarnir mínir hið fullkomna krydd í skemmtunina þína. Stórt afmæli eða lítið, ungur eða gamall - skiptir ekki máli, töfrar slá alltaf í gegn.<br><br>
-
-                    Bættu töfrum við í boðið þitt og veislan breytist í töfra!<br><br>
-
-                    Ef þig vantar góðan og áhugaverðan töframann, ekki hika við að hafa samband!<br>
-                    Ég hlakka til þess að skemmta þér og þínum :)</p>
-                </div>
-            </div>
-
-            <div id="testamonials" class="yellow_header">
-                <div id="test">
-                    <p class="rev">I was blown away at how easy our guide made this naturally daunting experience.. I was soo comfortable, and felt safe and well looked after. It was my first dry suit experience at with his experience and i felt completly at ease. Would give 6 stars if I could. Cheers again :D</p>
-                    <p class="nam">- Troy T, March 2015</p>
-                </div>
-                <div id="test">
-                    <p class="rev">For those who dive at 4 degrees celcius for the first time there is no better man to make you feel comfortable and confident than Hedinn. For those who have done it before elsewhere the combination of Hedinn skills, company and the dive site itself will make the dive a memorable experience. Try it regardless of any reservations you may have. Hedinn thank you and really hope to see you again!</p>
-                    <p class="nam">- George and Natassa, Greece</p>
-                </div>
-                <div id="test">
-                    <p class="rev">This was one of the most incredible diving experiences ever. we read  somewhere that if you wanted to dive silfra, Hedinn was the man to go with - they weren't wrong. Not only is he a master of this area, he's got a great personality and dishes out all sorts of interesting info on  Iceland and diving stories. Highly recommended!! Thank you for a wonderful underwater experience and for the pics to remember it by!</p>
-                    <p class="nam">- Melody and Toby, Hobart, Australia</p>
-                </div>
-            </div>
-            
-            <div id="about" class="content">
-                <h2 class="darker">Um mig</h2>
-                <hr class="darker"><br/>
-                <p id="about">Ég heiti Arnúlfur og ég er töframaður. Áhugi minn á töfrum kviknaði sumarið 2008 eftir að ég sá flottan galdur hér á veraldarvefnum. Núna mörgum árum seinna þá er ég orðinn ritari HÍT (Hið Íslenska Töframannagildi) og hvert sem ég fer þá er spilastokkurinn með í för.<br><br>
-
-                Fyrir mér eru töfrar gleðigjafi. Töfrar eru þannig meira er einungis einhver trix. Töfrar eru mín leið til þess að gefa af mér. Mín leið til þess að gleðja ykkur.Ég hef gaman af öllum gerðum af töfrum. Ég er stöðugt að bæta við mig nýjum töfrabrögðum og legg metnað í að læra ný og framandi töfrabrögð.<br><br>
-                    
-                Ég hef komið fram víða. Á ferðalagi mínu um Asíu árið 2015 sýndi ég töfra á mörgum stöðum í m.a. Tælandi, Laos, Kambodiu, Víetnam, Malasíu og Indónesíu. Það er ekkert sem mér finnst skemmtilegra en að gleðja fólk með töfrum og sýna því að það er ekki allt sem sýnist. Ég vona að einn daginn fái ég tækifæri til þess að skemmta þér.<br><br>
-                    
-                Knús til ykkar allra<br>
-                Arnúlfur Töframaður.</p>
-
-<!--                    <iframe src="https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2Feaglewolfmagic%2Fvideos%2Fvb.1064428643600389%2F1086466244729962%2F%3Ftype%3D3&show_text=0&width=560" width="560" height="315" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowTransparency="true" allowFullScreen="true"></iframe> -->
-            </div>
-
-            <!-- <img src="bilder/between.png" class="between"> -->
-        
-            <div class="light" id="contact">
-                <div class="content">
-                    <h2>Hafa samband</h2>
-                    <hr>
-                    <p id="topform">Til þess að bóka mig, annað hvort hringið í síma 865-9921, sendið skilaboð á <a href="mailto:hej@icelandfunland.is">tofrar@arnulfur.is</a> eða fyllið í hér fyrir neðan.</p>
-                    <form id="emailform" method="post" action="inquiry.php">
-                        <fieldset>
-                            <legend>Net bókun</legend>
-                            <label for="name">Nafn: </label>
-                            <input type="text" name="name" size="30">
-                            <label for="email">Netfang: </label>
-                            <input type="text" name="email" size="30">
-                            <label for="message">Skilaboð:</label>
-                            <textarea rows="5" name="message" cols="30"></textarea>
-                            <button type="submit" value="Submit">Staðfesta</button>
-                        </fieldset>
-                    </form> 
-
-                    <p>Hlakka til þess að heyra frá ykkur!</p>
-
-                    <script src="https://apis.google.com/js/platform.js"></script>
- 
-                    <div id="like">
-                        <div class="g-ytsubscribe" data-channelid="UCxXRJsnQULNh6TKz79v1Wrg" data-layout="full" data-count="hidden"></div>
-
-                        <div class="fb-like" data-href="https://www.facebook.com/eaglewolfmagic" data-layout="button_count" data-action="like" data-show-faces="true" data-share="true"></div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="footer">
-                <p id="footerleft">+356 865 9921 /// 
-                <a href="mailto:blessad@arnulfur.is">tofrar@arnulfur.is</a></p>
-                <p id="footerright">Developed and maintained by <a href="www.isisochbast.se">Isis och Bast</p>
-            </div>
-        </div>
+    </div>
 
     </body>
 </html>
-
-<?php
-?>

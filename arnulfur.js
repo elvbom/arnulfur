@@ -57,7 +57,7 @@ $(function(){
         .fadeIn()
         .end()
         .appendTo('#testamonials');
-    },  8000);
+    },  10000);
 });
 
 // $(document).ready(function () {
